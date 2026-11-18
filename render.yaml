@@ -1,0 +1,60 @@
+# Render Blueprint for אחזקה: web service + Render Postgres + persistent disk for photos.
+# Nothing here is created until someone connects the repo to Render ("New > Blueprint") and approves the plans.
+services:
+  - type: web
+    name: achzaka
+    runtime: node
+    region: frankfurt            # closest Render region to Israel
+    plan: 0.5c-512mb             # disks need a paid plan; raise to 1c-2g when the client is busy
+    # Chrome headless shell is downloaded into .chrome/ for the PDF export (no system Chrome on Render's Node runtime)
+    buildCommand: npm ci && npm run build && npx -y @puppeteer/browsers@2 install chrome-headless-shell@stable --path .chrome
+    startCommand: npm start
+    healthCheckPath: /healthz
+    maxShutdownDelaySeconds: 60
+    autoDeployTrigger: commit
+    disk:
+      name: achzaka-uploads
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: achzaka-db
+          property: connectionString
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      - key: PG_POOL_MAX
+        value: "10"
+      - key: DEMO_OTP          # must stay off in production (the server also ignores it there)
+        value: "0"
+      - key: DEMO_DATA         # never seed or reset demo data in production
+        value: "0"
+      - key: ADMIN_PHONE       # first manager, created only when the database has no users
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      - key: SMTP_URL          # optional: outgoing email (e.g. smtps://user:pass@smtp.host:465); unset = emails stay pending
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: TWILIO_ACCOUNT_SID # optional: real SMS / OTP; leave empty until Twilio is set up
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
+        sync: false
+
+databases:
+  - name: achzaka-db
+    region: frankfurt
+    plan: 0.5c-1g              # pick the final plan in the Render dashboard (free DBs expire)
+    postgresMajorVersion: "17"
+    databaseName: achzaka
+    user: achzaka
+    ipAllowList: []            # private network only; the web service connects internally

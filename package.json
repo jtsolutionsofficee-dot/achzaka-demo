@@ -1,0 +1,32 @@
+{
+  "name": "achzaka",
+  "version": "1.0.0",
+  "private": true,
+  "description": "אחזקה — מערכת תפעול לקריאות שירות בבתים ובדירות יוקרה",
+  "scripts": {
+    "build": "vite build --config client/vite.config.mjs",
+    "start": "node server/index.js",
+    "dev": "npm run build && npm start",
+    "start:demo": "DEMO_OTP=1 node server/index.js",
+    "test": "node --test test/",
+    "db:copy-sqlite": "node scripts/copy-sqlite-to-pg.js",
+    "db:schema": "node scripts/gen-pg-schema.js"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "better-sqlite3": "^12.11.1",
+    "cookie-parser": "^1.4.7",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.2",
+    "nodemailer": "^10.0.14",
+    "pdfkit": "^0.20.2",
+    "pg": "^8.23.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^6.0.11"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
