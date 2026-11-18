@@ -55,6 +55,22 @@ test('password login per door', async () => {
   assert.equal((await call('x', 'POST', '/api/auth/login', { phone: '050-100-0003', password: 'nope', door: 'technician' })).status, 401);
 });
 
+test('shared demo login 000000000 per door', async () => {
+  for (const [who, door, role] of [
+    ['dana', 'owner', 'customer'],
+    ['eyal', 'technician', 'employee'],
+    ['ronit', 'manager', 'manager'],
+  ]) {
+    const r = await call('shared-' + who, 'POST', '/api/auth/login', { phone: '000000000', password: '000000000', door });
+    assert.equal(r.status, 200, `${who} shared demo login`);
+    assert.equal(r.json.user.id, who);
+    assert.equal(r.json.user.role, role);
+    assert.equal((await call('shared-' + who, 'GET', '/api/me')).json.id, who);
+  }
+  assert.equal((await call('x', 'POST', '/api/auth/login', { phone: '000000000', password: '111111111', door: 'manager' })).status, 401);
+  assert.equal((await call('x', 'POST', '/api/auth/login', { phone: '000000000', password: '000000000', door: 'nope' })).status, 403);
+});
+
 test('one-time code login (demo mode shows the code)', async (t) => {
   const r = await call('otp', 'POST', '/api/auth/otp/request', { phone: '050-100-0004' });
   if (r.status === 429) return t.skip('cooldown from an earlier run');

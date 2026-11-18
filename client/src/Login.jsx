@@ -21,13 +21,15 @@ function matchesDoor(user, door) {
   return false;
 }
 
+const isDemoData = typeof document !== 'undefined' && document.documentElement.getAttribute('data-demo-data') === '1';
+
 export default function Login({ onEnter }) {
   const [door, setDoor] = useState('owner');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [password, setPassword] = useState('');
-  const [usePassword, setUsePassword] = useState(false);
+  const [usePassword, setUsePassword] = useState(isDemoData);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -81,6 +83,7 @@ export default function Login({ onEnter }) {
       <form className="login-card" onSubmit={submit}>
         <img className="login-mark" src="/icon-v2-192.png" alt="" width="48" height="48" />
         <h1 className="login-title">אחזקה</h1>
+        {isDemoData ? <p className="login-hint">דמו: 000000000</p> : null}
         <div className="door-bar" role="group" aria-label="תפקיד" data-door={door}>
           <span className="door-glide" aria-hidden="true" />
           {DOORS.map((item) => (

@@ -8,7 +8,7 @@
     "start": "node server/index.js",
     "dev": "npm run build && npm start",
     "start:demo": "DEMO_OTP=1 node server/index.js",
-    "test": "node --test test/",
+    "test": "node --test test/*.js",
     "db:copy-sqlite": "node scripts/copy-sqlite-to-pg.js",
     "db:schema": "node scripts/gen-pg-schema.js"
   },

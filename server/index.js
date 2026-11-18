@@ -581,19 +581,34 @@ function presentUnit(row) {
   return { id: row.id, buildingId: row.building_id, label: row.label, floor: row.floor || '' };
 }
 
+// Shared presentation login (DEMO_DATA only): 000000000 / 000000000 + the chosen door.
+const SHARED_DEMO_LOGIN = '000000000';
+const SHARED_DEMO_USERS = { manager: 'ronit', owner: 'dana', technician: 'eyal' };
+
 app.post('/api/auth/login', async (req, res) => {
   const phone = dbmod.digitsPhone(req.body && req.body.phone);
   const password = String((req.body && req.body.password) != null ? req.body.password : '');
-  const user = phone ? (await findByPhone(phone)) : null;
-  if (!user) return res.status(401).json({ error: 'המספר לא מוכר' });
-  if (!user.password_hash || !dbmod.verifyPassword(password, user.password_hash)) {
-    return res.status(401).json({ error: 'הסיסמה שגויה' });
-  }
   const door = req.body && req.body.door != null ? String(req.body.door).trim() : '';
-  if (door) {
-    if (!Object.prototype.hasOwnProperty.call(DOOR_ERROR, door) || accountDoor(user) !== door) {
+  let user = null;
+  if (dbmod.DEMO_DATA && phone === SHARED_DEMO_LOGIN && password === SHARED_DEMO_LOGIN) {
+    const id = SHARED_DEMO_USERS[door];
+    if (!id) {
       (await clearSession(req, res));
       return res.status(403).json({ error: DOOR_ERROR[door] || 'החשבון הזה אינו תואם לתפקיד שנבחר' });
+    }
+    user = (await db.prepare('SELECT * FROM users WHERE id = ?').get(id));
+    if (!user) return res.status(401).json({ error: 'המספר לא מוכר' });
+  } else {
+    user = phone ? (await findByPhone(phone)) : null;
+    if (!user) return res.status(401).json({ error: 'המספר לא מוכר' });
+    if (!user.password_hash || !dbmod.verifyPassword(password, user.password_hash)) {
+      return res.status(401).json({ error: 'הסיסמה שגויה' });
+    }
+    if (door) {
+      if (!Object.prototype.hasOwnProperty.call(DOOR_ERROR, door) || accountDoor(user) !== door) {
+        (await clearSession(req, res));
+        return res.status(403).json({ error: DOOR_ERROR[door] || 'החשבון הזה אינו תואם לתפקיד שנבחר' });
+      }
     }
   }
   (await issueSession(res, user, req));
@@ -1919,7 +1934,8 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
     res.set('Cache-Control', 'no-cache');
     const demoFlag = DEMO_MODE ? '1' : '0';
-    const html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8').replace(/<html([^>]*)>/i, `<html$1 data-demo="${demoFlag}">`);
+    const demoDataFlag = dbmod.DEMO_DATA ? '1' : '0';
+    const html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8').replace(/<html([^>]*)>/i, `<html$1 data-demo="${demoFlag}" data-demo-data="${demoDataFlag}">`);
     res.type('html').send(html);
   });
 }

@@ -1,5 +1,5 @@
 /* אחזקה app shell. API is never stored; network is the source of truth. */
-const CACHE = 'achzaka-shell-v28';
+const CACHE = 'achzaka-shell-v29';
 const SHELL = [
   '/',
   '/manifest.webmanifest',
